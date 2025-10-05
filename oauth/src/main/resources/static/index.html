@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth 2.0 Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        h2 { color: #666; margin-top: 30px; }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .endpoint {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-left: 4px solid #4CAF50;
+        }
+        .code {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .btn {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover { background: #45a049; }
+        .credentials {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔐 OAuth 2.0 Demo Application</h1>
+    <p>Welcome to the Spring Boot OAuth 2.0 demonstration project!</p>
+
+    <div class="credentials">
+        <h3>Test Credentials</h3>
+        <p><strong>User Account:</strong> username: <code>user</code> / password: <code>password</code></p>
+        <p><strong>Admin Account:</strong> username: <code>admin</code> / password: <code>admin</code></p>
+        <p><strong>OAuth Client:</strong> clientId: <code>demo-client</code> / clientSecret: <code>secret</code></p>
+    </div>
+
+    <h2>Available Endpoints</h2>
+
+    <div class="section">
+        <h3>Public Endpoints (No Auth Required)</h3>
+        <div class="endpoint">
+            <strong>GET</strong> /api/public/hello
+            <button class="btn" onclick="testEndpoint('/api/public/hello')">Test</button>
+        </div>
+        <div class="endpoint">
+            <strong>GET</strong> /api/public/info
+            <button class="btn" onclick="testEndpoint('/api/public/info')">Test</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>User Endpoints (Requires 'read' scope)</h3>
+        <div class="endpoint">
+            <strong>GET</strong> /api/user/profile
+        </div>
+        <div class="endpoint">
+            <strong>GET</strong> /api/user/data
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>Admin Endpoints (Requires 'write' scope)</h3>
+        <div class="endpoint">
+            <strong>GET</strong> /api/admin/dashboard
+        </div>
+        <div class="endpoint">
+            <strong>POST</strong> /api/admin/action
+        </div>
+    </div>
+
+    <h2>How to Get an Access Token</h2>
+
+    <div class="section">
+        <h3>Step 1: Authorization Request</h3>
+        <p>Visit this URL in your browser to start the OAuth flow:</p>
+        <div class="code">
+            http://localhost:8080/oauth2/authorize?response_type=code&client_id=demo-client&redirect_uri=http://localhost:8080/authorized&scope=openid%20profile%20read%20write
+        </div>
+        <button class="btn" onclick="window.location.href='/oauth2/authorize?response_type=code&client_id=demo-client&redirect_uri=http://localhost:8080/authorized&scope=openid%20profile%20read%20write'">
+            Start OAuth Flow
+        </button>
+    </div>
+
+    <div class="section">
+        <h3>Step 2: Get Token (using cURL)</h3>
+        <p>After authorization, exchange the code for a token:</p>
+        <div class="code">
+            curl -X POST http://localhost:8080/oauth2/token \
+            -u demo-client:secret \
+            -d "grant_type=authorization_code" \
+            -d "code=YOUR_AUTH_CODE" \
+            -d "redirect_uri=http://localhost:8080/authorized"
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>Step 3: Use Token</h3>
+        <p>Use the access token to call protected endpoints:</p>
+        <div class="code">
+            curl http://localhost:8080/api/user/profile \
+            -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+        </div>
+    </div>
+
+    <h2>OAuth 2.0 Server Endpoints</h2>
+    <div class="section">
+        <div class="endpoint"><strong>Authorization:</strong> /oauth2/authorize</div>
+        <div class="endpoint"><strong>Token:</strong> /oauth2/token</div>
+        <div class="endpoint"><strong>JWK Set:</strong> /oauth2/jwks</div>
+        <div class="endpoint"><strong>Introspection:</strong> /oauth2/introspect</div>
+        <div class="endpoint"><strong>Revocation:</strong> /oauth2/revoke</div>
+    </div>
+
+    <div id="result" style="margin-top: 20px;"></div>
+</div>
+
+<script>
+    async function testEndpoint(url) {
+        const resultDiv = document.getElementById('result');
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            resultDiv.innerHTML = `
+                <div class="section">
+                    <h3>Response from ${url}</h3>
+                    <pre class="code">${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        } catch (error) {
+            resultDiv.innerHTML = `
+                <div class="section" style="border-left-color: #f44336;">
+                    <h3>Error</h3>
+                    <p>${error.message}</p>
+                </div>
+            `;
+        }
+    }
+</script>
+</body>
+</html>
