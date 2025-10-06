@@ -32,7 +32,7 @@ public class EmployeeService {
      * Get all employees - Not cached to show difference
      */
     public Iterable<Employee> getAllEmployees() {
-        System.out.println("📋 Fetching all employees from H2 Database");
+        System.out.println("Fetching all employees from H2 Database");
         return employeeRepository.findAll();
     }
 
@@ -60,7 +60,7 @@ public class EmployeeService {
      * Create new employee
      */
     public Employee createEmployee(Employee employee) {
-        System.out.println("➕ Creating new employee in H2 Database");
+        System.out.println("Creating new employee in H2 Database");
         employee.setId(null); // Ensure it's a new record
         return employeeRepository.save(employee);
     }
