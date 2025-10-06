@@ -104,20 +104,20 @@ You might ask: "Why not just send username/password every time?"
 **Security reasons:**
 
 1. **Password Never Leaves Your Control**
-    - App never sees your password
-    - Only the authorization server (front desk) sees it
+   - App never sees your password
+   - Only the authorization server (front desk) sees it
 
 2. **Limited Access**
-    - Token only gives specific permissions (scopes)
-    - Like a key card that only opens certain doors
+   - Token only gives specific permissions (scopes)
+   - Like a key card that only opens certain doors
 
 3. **Tokens Expire**
-    - If someone steals your token, it stops working after 30 minutes
-    - If someone steals your password, they have it forever
+   - If someone steals your token, it stops working after 30 minutes
+   - If someone steals your password, they have it forever
 
 4. **Easy to Revoke**
-    - You can cancel a token without changing password
-    - Like deactivating a lost key card
+   - You can cancel a token without changing password
+   - Like deactivating a lost key card
 
 ---
 
@@ -126,6 +126,7 @@ You might ask: "Why not just send username/password every time?"
 ### Prerequisites
 - Java 17 or higher
 - Maven 3.6 or higher
+- Google Cloud Console account (for Google Sign-In)
 
 ### Running the Application
 
@@ -149,7 +150,122 @@ Open browser: `http://localhost:8080`
 
 ---
 
+## Google Authentication Setup
+
+### Understanding Google Sign-In
+
+When you use "Sign in with Google", the flow is different from your own OAuth server:
+
+**Your OAuth Server:**
+- YOUR app stores and verifies passwords
+- YOUR app issues tokens
+- Users create accounts in YOUR system
+
+**Google OAuth:**
+- GOOGLE stores and verifies passwords
+- GOOGLE issues tokens
+- Users use their existing Google accounts
+- Your app just receives user information from Google
+
+### Step 1: Register Your App with Google
+
+1. Go to Google Cloud Console: https://console.cloud.google.com/
+2. Create a new project or select an existing one
+3. Navigate to "APIs & Services" > "Credentials"
+4. Click "Create Credentials" > "OAuth client ID"
+5. Choose "Web application"
+6. Add Authorized redirect URI:
+   ```
+   http://localhost:8080/login/oauth2/code/google
+   ```
+7. Click "Create" and save your credentials:
+   - Client ID: `123456789-abcdefg.apps.googleusercontent.com`
+   - Client Secret: `GOCSPX-xxxxxxxxxxxxx`
+
+### Step 2: Update application.yml
+
+Add your Google credentials to `application.yml`:
+
+```yaml
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: YOUR_GOOGLE_CLIENT_ID
+            client-secret: YOUR_GOOGLE_CLIENT_SECRET
+            scope:
+              - openid
+              - profile
+              - email
+```
+
+### Step 3: Add Required Dependency
+
+Add to your `pom.xml`:
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-oauth2-client</artifactId>
+</dependency>
+```
+
+### Step 4: Test Google Sign-In
+
+1. Restart your application
+2. Visit: `http://localhost:8080/login`
+3. Click "Sign in with Google" button
+4. Authenticate with your Google account
+5. You'll be redirected to `/dashboard` with your Google profile
+
+### Google Authentication Flow Explained
+
+```
+1. USER CLICKS: "Sign in with Google"
+   Browser redirects to Google
+   
+2. GOOGLE LOGIN PAGE appears
+   User enters Google email/password
+   (Your app NEVER sees the password)
+   
+3. GOOGLE asks: "Allow demo-app to access your profile?"
+   User clicks "Allow"
+   
+4. GOOGLE redirects back to your app
+   URL: /login/oauth2/code/google?code=...
+   
+5. YOUR APP exchanges code with GOOGLE
+   POST to: https://oauth2.googleapis.com/token
+   
+6. GOOGLE sends user information
+   {
+     "sub": "1234567890",
+     "name": "John Doe",
+     "email": "john@gmail.com",
+     "picture": "https://..."
+   }
+   
+7. YOUR APP creates a session
+   User is now logged in with Google account
+```
+
+### Key Differences: Your OAuth vs Google OAuth
+
+| Aspect | Your OAuth Server | Google OAuth |
+|--------|-------------------|--------------|
+| Who verifies password? | Your app | Google |
+| Where are users stored? | Your database | Google's servers |
+| Who issues tokens? | Your app | Google |
+| User experience | Create new account | Use existing Google account |
+| Trust model | Users trust your app | Users trust Google |
+
+---
+
 ## Testing the Flow
+
+### Option 1: Test Your Own OAuth Server
 
 ### Step 1: Get Authorization Code
 
@@ -188,6 +304,50 @@ curl http://localhost:8080/api/user/profile \
 
 ---
 
+### Option 2: Test Google Sign-In
+
+### Step 1: Visit Login Page
+
+Open in browser:
+```
+http://localhost:8080/login
+```
+
+### Step 2: Click "Sign in with Google"
+
+You'll be redirected to Google's login page
+
+### Step 3: Authenticate with Google
+
+- Enter your Google email and password
+- Click "Allow" to grant permissions
+
+### Step 4: View Your Dashboard
+
+After successful authentication, you'll be redirected to:
+```
+http://localhost:8080/dashboard
+```
+
+You'll see:
+- Your Google profile picture
+- Your name from Google
+- Your email from Google
+- All attributes Google provided
+
+### Step 5: Access Protected Endpoints
+
+Once authenticated with Google, you can access:
+
+```bash
+curl http://localhost:8080/api/user/info \
+  -H "Cookie: JSESSIONID=YOUR_SESSION_ID"
+```
+
+Note: With Google login, you're using session-based authentication, not JWT tokens.
+
+---
+
 ## Key Terms Explained
 
 | Term | Simple Explanation | Hotel Analogy |
@@ -198,6 +358,71 @@ curl http://localhost:8080/api/user/profile \
 | **Scopes** | What permissions you granted | Which doors the key card opens |
 | **Resource Server** | The thing you want to access | Hotel room, gym, pool |
 | **Authorization Server** | Where you login and get tokens | Hotel front desk |
+| **OAuth Client** | Your app when using Google Sign-In | Guest using hotel services |
+| **OAuth Provider** | Google, Facebook, etc. | The issuing authority |
+
+---
+
+## Two Authentication Methods Compared
+
+### Method 1: Your Own OAuth Server
+
+**Use Case:** You want other applications to access your API
+
+**Flow:**
+```
+User → Your Login Page → Your Database → Your Token → Protected API
+```
+
+**Pros:**
+- Full control over user data
+- Custom authentication logic
+- No dependency on third parties
+
+**Cons:**
+- You manage passwords securely
+- Users must create new accounts
+- More responsibility for security
+
+### Method 2: Google OAuth (Social Login)
+
+**Use Case:** Let users login with existing Google accounts
+
+**Flow:**
+```
+User → Google Login → Google Verifies → Your App Gets User Info → Dashboard
+```
+
+**Pros:**
+- Users don't create new passwords
+- Trust Google's security
+- Faster user onboarding
+- Users trust Google more
+
+**Cons:**
+- Dependency on Google
+- Less control over authentication
+- Need internet connection
+
+### Which One to Use?
+
+**Use Your Own OAuth Server when:**
+- Building an API for other developers
+- Need full control over authentication
+- Building enterprise applications
+- Storing sensitive business data
+
+**Use Google OAuth when:**
+- Building consumer applications
+- Want quick user onboarding
+- Don't want to manage passwords
+- Users already have Google accounts
+
+**Use Both when:**
+- You want flexibility
+- Let users choose their login method
+- Building a modern web application
+- This is what your demo app does
 
 ---
 
@@ -219,6 +444,8 @@ curl http://localhost:8080/api/user/profile \
 
 ## Troubleshooting
 
+### Your Own OAuth Server
+
 **Problem: Authorization code expired**
 - Codes expire after 5 minutes
 - Solution: Start a new OAuth flow
@@ -231,3 +458,59 @@ curl http://localhost:8080/api/user/profile \
 - Token is valid but lacks required scope
 - User endpoints need 'read' scope
 - Admin endpoints need 'write' scope
+
+### Google OAuth Integration
+
+**Problem: Redirect URI mismatch**
+- Error: `redirect_uri_mismatch`
+- Solution: Ensure the redirect URI in Google Console exactly matches:
+  ```
+  http://localhost:8080/login/oauth2/code/google
+  ```
+
+**Problem: Invalid client error**
+- Check your `client-id` and `client-secret` in application.yml
+- Make sure you copied them correctly from Google Console
+- No extra spaces or quotes
+
+**Problem: Circular view path [login]**
+- This means Thymeleaf is looking for a template
+- Solution: Use the controller that returns HTML directly (see code above)
+- Make sure your controller uses `HttpServletResponse` to write HTML
+
+**Problem: After Google login, redirect to error page**
+- Check Security Configuration allows `/login/oauth2/code/google`
+- Verify OAuth2 client dependency is in pom.xml
+- Check application.yml has correct Google configuration
+
+**Problem: Session expired after logout**
+- This is normal behavior
+- User needs to login again
+- Configure session timeout in application.yml if needed:
+  ```yaml
+  server:
+    servlet:
+      session:
+        timeout: 30m
+  ```
+
+### General Issues
+
+**Problem: Port 8080 already in use**
+- Change port in application.yml:
+  ```yaml
+  server:
+    port: 8081
+  ```
+- Remember to update redirect URIs accordingly
+
+**Problem: Application won't start**
+- Check all dependencies are in pom.xml
+- Run `mvn clean install`
+- Check Java version is 17 or higher
+- Look for error messages in console
+
+**Problem: Google Sign-In button doesn't redirect**
+- Check browser console for JavaScript errors
+- Verify the link is `/oauth2/authorization/google`
+- Check Spring Security configuration allows the endpoint

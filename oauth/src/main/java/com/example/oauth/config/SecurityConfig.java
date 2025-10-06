@@ -43,6 +43,7 @@ import java.util.UUID;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    // OAuth Authorization Server (Your own OAuth server)
     @Bean
     @Order(1)
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -63,20 +64,32 @@ public class SecurityConfig {
         return http.build();
     }
 
+    // Default Security (Your app with Google login)
     @Bean
     @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize ->
                         authorize
-                                .requestMatchers("/", "/index.html", "/api/public/**").permitAll()
+                                .requestMatchers("/", "/index.html", "/login", "/api/public/**").permitAll()
                                 .requestMatchers("/api/user/**").hasAuthority("SCOPE_read")
                                 .requestMatchers("/api/admin/**").hasAuthority("SCOPE_write")
                                 .anyRequest().authenticated()
                 )
-                .formLogin(Customizer.withDefaults())
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .permitAll()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/dashboard", true)
+                )
                 .oauth2ResourceServer(oauth2 ->
                         oauth2.jwt(Customizer.withDefaults())
+                )
+                .logout(logout -> logout
+                        .logoutSuccessUrl("/")
+                        .permitAll()
                 );
 
         return http.build();
