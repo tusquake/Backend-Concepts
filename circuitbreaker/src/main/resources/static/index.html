@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circuit Breaker Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .state-display {
+            text-align: center;
+            padding: 30px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .state-closed {
+            background: #d4edda;
+            border: 3px solid #28a745;
+        }
+
+        .state-open {
+            background: #f8d7da;
+            border: 3px solid #dc3545;
+        }
+
+        .state-half-open {
+            background: #fff3cd;
+            border: 3px solid #ffc107;
+        }
+
+        .state-display h3 {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .state-closed h3 { color: #28a745; }
+        .state-open h3 { color: #dc3545; }
+        .state-half-open h3 { color: #ffc107; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .metric-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .metric-item label {
+            display: block;
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .metric-item .value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .control-section {
+            margin: 20px 0;
+        }
+
+        .control-section h3 {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .log-container {
+            grid-column: 1 / -1;
+        }
+
+        .log-window {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .log-entry.success { color: #4ec9b0; }
+        .log-entry.error { color: #f48771; }
+        .log-entry.info { color: #9cdcfe; }
+        .log-entry.warning { color: #dcdcaa; }
+
+        .config-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .config-display pre {
+            margin: 0;
+            font-size: 0.9em;
+            color: #333;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .call-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .call-input input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+
+        .call-input input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Circuit Breaker Dashboard</h1>
+        <p>Real-time monitoring and control for Resilience4j Circuit Breaker</p>
+    </header>
+
+    <div class="dashboard">
+        <!-- Circuit Breaker State Card -->
+        <div class="card">
+            <h2>Circuit Breaker State</h2>
+            <div id="stateDisplay" class="state-display state-closed">
+                <h3 id="stateName">CLOSED</h3>
+                <p id="stateDescription">Service is healthy</p>
+            </div>
+            <div class="control-section">
+                <h3>Manual State Control</h3>
+                <div class="button-group">
+                    <button class="btn-success" onclick="transitionState('CLOSED')">CLOSED</button>
+                    <button class="btn-warning" onclick="transitionState('HALF_OPEN')">HALF_OPEN</button>
+                    <button class="btn-danger" onclick="transitionState('OPEN')">OPEN</button>
+                </div>
+            </div>
+            <div class="control-section">
+                <button class="btn-secondary" onclick="resetCircuitBreaker()" style="width: 100%">Reset Circuit Breaker</button>
+            </div>
+        </div>
+
+        <!-- Metrics Card -->
+        <div class="card">
+            <h2>Real-time Metrics</h2>
+            <div class="metrics-grid">
+                <div class="metric-item">
+                    <label>Failure Rate</label>
+                    <div class="value" id="failureRate">0%</div>
+                </div>
+                <div class="metric-item">
+                    <label>Slow Call Rate</label>
+                    <div class="value" id="slowCallRate">0%</div>
+                </div>
+                <div class="metric-item">
+                    <label>Successful Calls</label>
+                    <div class="value" id="successCalls">0</div>
+                </div>
+                <div class="metric-item">
+                    <label>Failed Calls</label>
+                    <div class="value" id="failedCalls">0</div>
+                </div>
+                <div class="metric-item">
+                    <label>Slow Calls</label>
+                    <div class="value" id="slowCalls">0</div>
+                </div>
+                <div class="metric-item">
+                    <label>Buffered Calls</label>
+                    <div class="value" id="bufferedCalls">0</div>
+                </div>
+            </div>
+            <button class="btn-info" onclick="loadMetrics()" style="width: 100%; margin-top: 15px">Refresh Metrics</button>
+        </div>
+
+        <!-- Test Controls Card -->
+        <div class="card">
+            <h2>Test Service Calls</h2>
+            <div class="call-input">
+                <input type="text" id="callData" placeholder="Enter test data..." value="test-request">
+                <button class="btn-primary" onclick="callService()">Call Service</button>
+            </div>
+            <div class="control-section">
+                <h3>Simulation Controls</h3>
+                <div class="button-group">
+                    <button class="btn-danger" onclick="enableFailures()">Enable Failures</button>
+                    <button class="btn-success" onclick="disableFailures()">Disable Failures</button>
+                </div>
+                <div class="button-group" style="margin-top: 10px">
+                    <button class="btn-warning" onclick="enableSlowCalls()">Enable Slow Calls</button>
+                    <button class="btn-success" onclick="disableSlowCalls()">Disable Slow Calls</button>
+                </div>
+            </div>
+            <div class="control-section">
+                <h3>Bulk Testing</h3>
+                <button class="btn-primary" onclick="makeMultipleCalls(10)" style="width: 100%">Make 10 Calls</button>
+            </div>
+        </div>
+
+        <!-- Configuration Card -->
+        <div class="card">
+            <h2>Configuration</h2>
+            <div class="config-display">
+                <pre id="configDisplay">Loading configuration...</pre>
+            </div>
+        </div>
+
+        <!-- Activity Log Card -->
+        <div class="card log-container">
+            <h2>Activity Log</h2>
+            <div class="log-window" id="logWindow">
+                <div class="log-entry info">Dashboard initialized. Waiting for activity...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE = 'http://localhost:8080/api';
+    let autoRefresh = null;
+
+    // Initialize dashboard
+    window.onload = function() {
+        loadState();
+        loadMetrics();
+        startAutoRefresh();
+    };
+
+    function startAutoRefresh() {
+        autoRefresh = setInterval(() => {
+            loadState();
+            loadMetrics();
+        }, 2000);
+    }
+
+    function stopAutoRefresh() {
+        if (autoRefresh) {
+            clearInterval(autoRefresh);
+        }
+    }
+
+    async function loadState() {
+        try {
+            const response = await fetch(`${API_BASE}/circuit-breaker/state`);
+            const data = await response.json();
+            updateStateDisplay(data.state);
+            updateMetricsDisplay(data.metrics);
+            updateConfigDisplay(data.config);
+        } catch (error) {
+            logMessage('error', 'Failed to load circuit breaker state: ' + error.message);
+        }
+    }
+
+    async function loadMetrics() {
+        try {
+            const response = await fetch(`${API_BASE}/circuit-breaker/metrics`);
+            const data = await response.json();
+            updateMetricsDisplay(data);
+        } catch (error) {
+            logMessage('error', 'Failed to load metrics: ' + error.message);
+        }
+    }
+
+    function updateStateDisplay(state) {
+        const stateDisplay = document.getElementById('stateDisplay');
+        const stateName = document.getElementById('stateName');
+        const stateDescription = document.getElementById('stateDescription');
+
+        stateName.textContent = state;
+
+        stateDisplay.classList.remove('state-closed', 'state-open', 'state-half-open');
+
+        switch(state) {
+            case 'CLOSED':
+                stateDisplay.classList.add('state-closed');
+                stateDescription.textContent = 'Service is healthy - all requests allowed';
+                break;
+            case 'OPEN':
+                stateDisplay.classList.add('state-open');
+                stateDescription.textContent = 'Circuit is open - failing fast with fallback';
+                break;
+            case 'HALF_OPEN':
+                stateDisplay.classList.add('state-half-open');
+                stateDescription.textContent = 'Testing recovery - limited calls allowed';
+                break;
+        }
+    }
+
+    function updateMetricsDisplay(metrics) {
+        document.getElementById('failureRate').textContent = metrics.failureRate || '0%';
+        document.getElementById('slowCallRate').textContent = metrics.slowCallRate || '0%';
+        document.getElementById('successCalls').textContent = metrics.numberOfSuccessfulCalls || 0;
+        document.getElementById('failedCalls').textContent = metrics.numberOfFailedCalls || 0;
+        document.getElementById('slowCalls').textContent = metrics.numberOfSlowCalls || 0;
+        document.getElementById('bufferedCalls').textContent = metrics.numberOfBufferedCalls || 0;
+    }
+
+    function updateConfigDisplay(config) {
+        const configText = Object.entries(config)
+            .map(([key, value]) => `${key}: ${value}`)
+            .join('\n');
+        document.getElementById('configDisplay').textContent = configText;
+    }
+
+    async function callService() {
+        const data = document.getElementById('callData').value;
+        logMessage('info', `Calling service with data: ${data}`);
+
+        try {
+            const response = await fetch(`${API_BASE}/call?data=${encodeURIComponent(data)}`);
+            const result = await response.json();
+
+            if (response.ok) {
+                logMessage('success', `Call successful: ${result.result}`);
+            } else {
+                logMessage('error', `Call failed: ${result.error || 'Unknown error'}`);
+            }
+
+            loadState();
+            loadMetrics();
+        } catch (error) {
+            logMessage('error', 'Request failed: ' + error.message);
+        }
+    }
+
+    async function makeMultipleCalls(count) {
+        logMessage('info', `Making ${count} consecutive calls...`);
+        for (let i = 1; i <= count; i++) {
+            await callService();
+            await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        logMessage('info', `Completed ${count} calls`);
+    }
+
+    async function transitionState(state) {
+        logMessage('info', `Transitioning circuit breaker to ${state} state...`);
+
+        try {
+            const response = await fetch(`${API_BASE}/circuit-breaker/transition/${state}`, {
+                method: 'POST'
+            });
+            const result = await response.text();
+            logMessage('success', result);
+            loadState();
+        } catch (error) {
+            logMessage('error', 'State transition failed: ' + error.message);
+        }
+    }
+
+    async function resetCircuitBreaker() {
+        logMessage('info', 'Resetting circuit breaker...');
+
+        try {
+            const response = await fetch(`${API_BASE}/circuit-breaker/reset`, {
+                method: 'POST'
+            });
+            const result = await response.text();
+            logMessage('success', result);
+            loadState();
+            loadMetrics();
+        } catch (error) {
+            logMessage('error', 'Reset failed: ' + error.message);
+        }
+    }
+
+    async function enableFailures() {
+        logMessage('warning', 'Enabling failure simulation...');
+
+        try {
+            const response = await fetch(`${API_BASE}/simulate/enable-failures`, {
+                method: 'POST'
+            });
+            const result = await response.text();
+            logMessage('warning', result);
+        } catch (error) {
+            logMessage('error', 'Failed to enable failures: ' + error.message);
+        }
+    }
+
+    async function disableFailures() {
+        logMessage('success', 'Disabling failure simulation...');
+
+        try {
+            const response = await fetch(`${API_BASE}/simulate/disable-failures`, {
+                method: 'POST'
+            });
+            const result = await response.text();
+            logMessage('success', result);
+        } catch (error) {
+            logMessage('error', 'Failed to disable failures: ' + error.message);
+        }
+    }
+
+    async function enableSlowCalls() {
+        logMessage('warning', 'Enabling slow call simulation...');
+
+        try {
+            const response = await fetch(`${API_BASE}/simulate/enable-slow-responses`, {
+                method: 'POST'
+            });
+            const result = await response.text();
+            logMessage('warning', result);
+        } catch (error) {
+            logMessage('error', 'Failed to enable slow calls: ' + error.message);
+        }
+    }
+
+    async function disableSlowCalls() {
+        logMessage('success', 'Disabling slow call simulation...');
+
+        try {
+            const response = await fetch(`${API_BASE}/simulate/disable-slow-responses`, {
+                method: 'POST'
+            });
+            const result = await response.text();
+            logMessage('success', result);
+        } catch (error) {
+            logMessage('error', 'Failed to disable slow calls: ' + error.message);
+        }
+    }
+
+    function logMessage(type, message) {
+        const logWindow = document.getElementById('logWindow');
+        const timestamp = new Date().toLocaleTimeString();
+        const entry = document.createElement('div');
+        entry.className = `log-entry ${type}`;
+        entry.textContent = `[${timestamp}] ${message}`;
+
+        logWindow.insertBefore(entry, logWindow.firstChild);
+
+        // Keep only last 50 entries
+        while (logWindow.children.length > 50) {
+            logWindow.removeChild(logWindow.lastChild);
+        }
+    }
+</script>
+</body>
+</html>

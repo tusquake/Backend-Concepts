@@ -1,0 +1,73 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: circuit-breaker-demo
+
+# Resilience4j Circuit Breaker Configuration
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        # Sliding window type: COUNT_BASED or TIME_BASED
+        slidingWindowType: COUNT_BASED
+        # Number of calls to record in the sliding window
+        slidingWindowSize: 10
+        # Minimum number of calls before calculating failure rate
+        minimumNumberOfCalls: 5
+        # Failure rate threshold percentage to open circuit
+        failureRateThreshold: 50
+        # Slow call duration threshold (ms)
+        slowCallDurationThreshold: 2000
+        # Slow call rate threshold percentage
+        slowCallRateThreshold: 50
+        # Time circuit breaker stays in OPEN state before moving to HALF_OPEN (ms)
+        waitDurationInOpenState: 10000
+        # Number of permitted calls when in HALF_OPEN state
+        permittedNumberOfCallsInHalfOpenState: 3
+        # Automatically transition from OPEN to HALF_OPEN
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        # Record exceptions as failures
+        recordExceptions:
+          - java.lang.Exception
+        # Ignore certain exceptions
+        ignoreExceptions:
+          - java.lang.IllegalArgumentException
+
+    instances:
+      externalService:
+        baseConfig: default
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 15000
+
+      databaseService:
+        baseConfig: default
+        slidingWindowSize: 20
+        failureRateThreshold: 60
+        waitDurationInOpenState: 20000
+        slidingWindowType: TIME_BASED
+
+# Actuator endpoints for monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,circuitbreakers,circuitbreakerevents
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Logging
+logging:
+  level:
+    io.github.resilience4j: DEBUG
+    com.example: DEBUG
