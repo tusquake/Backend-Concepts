@@ -157,19 +157,19 @@ Stores data as **JSON-like documents** (called BSON):
 ```
 
 ### Strengths:
-✅ **Flexible Schema**: Each document can have different fields  
-✅ **Fast Development**: No need to design tables upfront  
-✅ **Natural JSON**: Perfect for JavaScript/Node.js apps  
-✅ **Easy to Scale Horizontally**: Add more servers easily  
-✅ **Good for Prototyping**: Change structure anytime  
-✅ **Nested Data**: Store related data together
+ **Flexible Schema**: Each document can have different fields  
+ **Fast Development**: No need to design tables upfront  
+ **Natural JSON**: Perfect for JavaScript/Node.js apps  
+ **Easy to Scale Horizontally**: Add more servers easily  
+ **Good for Prototyping**: Change structure anytime  
+ **Nested Data**: Store related data together
 
 ### Weaknesses:
-❌ **No Joins**: Hard to combine data from multiple collections  
-❌ **Data Duplication**: Same data stored in multiple places  
-❌ **Memory Hungry**: Needs lots of RAM  
-❌ **Weaker Consistency**: Might show outdated data temporarily  
-❌ **Not ACID by Default**: Less safe for transactions
+ **No Joins**: Hard to combine data from multiple collections  
+ **Data Duplication**: Same data stored in multiple places  
+ **Memory Hungry**: Needs lots of RAM  
+ **Weaker Consistency**: Might show outdated data temporarily  
+ **Not ACID by Default**: Less safe for transactions
 
 ### Real-World Use Cases:
 - **E-commerce Product Catalogs**: Each product has different attributes
@@ -204,19 +204,19 @@ user123 | name    | email   | age     | ...
 ```
 
 ### Strengths:
-✅ **Massive Scale**: Handles petabytes of data  
-✅ **No Single Point of Failure**: If one server dies, others continue  
-✅ **Linear Scalability**: Add servers = proportional performance boost  
-✅ **Fast Writes**: Optimized for write-heavy workloads  
-✅ **Always Available**: 99.999% uptime possible  
-✅ **Geographic Distribution**: Spread data across continents
+ **Massive Scale**: Handles petabytes of data  
+ **No Single Point of Failure**: If one server dies, others continue  
+ **Linear Scalability**: Add servers = proportional performance boost  
+ **Fast Writes**: Optimized for write-heavy workloads  
+ **Always Available**: 99.999% uptime possible  
+ **Geographic Distribution**: Spread data across continents
 
 ### Weaknesses:
-❌ **Eventually Consistent**: Data might be out of sync temporarily  
-❌ **No Joins**: Must denormalize data  
-❌ **Complex Queries Are Hard**: Not good for ad-hoc queries  
-❌ **Steep Learning Curve**: Different mindset than SQL  
-❌ **Slower Reads**: Compared to other NoSQL options
+ **Eventually Consistent**: Data might be out of sync temporarily  
+ **No Joins**: Must denormalize data  
+ **Complex Queries Are Hard**: Not good for ad-hoc queries  
+ **Steep Learning Curve**: Different mindset than SQL  
+ **Slower Reads**: Compared to other NoSQL options
 
 ### Real-World Use Cases:
 - **Time-Series Data**: Logs, metrics, sensor data
@@ -265,17 +265,17 @@ Value: { "name": "John", "email": "john@example.com" }
 ```
 
 ### Strengths:
-✅ **Blazing Fast**: Single-digit millisecond latency  
-✅ **Fully Managed**: Amazon handles everything  
-✅ **Auto-Scaling**: Handles traffic spikes automatically  
-✅ **High Availability**: Built on AWS infrastructure  
-✅ **Flexible Pricing**: Pay only for what you use
+ **Blazing Fast**: Single-digit millisecond latency  
+ **Fully Managed**: Amazon handles everything  
+ **Auto-Scaling**: Handles traffic spikes automatically  
+ **High Availability**: Built on AWS infrastructure  
+ **Flexible Pricing**: Pay only for what you use
 
 ### Weaknesses:
-❌ **Vendor Lock-in**: Stuck with AWS  
-❌ **Complex Queries**: Very limited  
-❌ **Costs Can Explode**: Can get expensive at scale  
-❌ **No Joins**: Must retrieve each item separately
+ **Vendor Lock-in**: Stuck with AWS  
+ **Complex Queries**: Very limited  
+ **Costs Can Explode**: Can get expensive at scale  
+ **No Joins**: Must retrieve each item separately
 
 ### Real-World Use Cases:
 - **Shopping Carts**: Amazon.com shopping cart
@@ -304,16 +304,16 @@ GET user:1234:name
 ```
 
 ### Strengths:
-✅ **Insanely Fast**: Microsecond latency (1000x faster than disk)  
-✅ **Rich Data Structures**: Lists, sets, sorted sets, hashes  
-✅ **Pub/Sub**: Real-time messaging built-in  
-✅ **Caching**: Perfect cache layer  
-✅ **Atomic Operations**: Safe concurrent access
+ **Insanely Fast**: Microsecond latency (1000x faster than disk)  
+ **Rich Data Structures**: Lists, sets, sorted sets, hashes  
+ **Pub/Sub**: Real-time messaging built-in  
+ **Caching**: Perfect cache layer  
+ **Atomic Operations**: Safe concurrent access
 
 ### Weaknesses:
-❌ **Limited by RAM**: Expensive for large datasets  
-❌ **Data Loss Risk**: If server crashes, data gone (unless configured)  
-❌ **Single-Threaded**: Limited CPU usage
+ **Limited by RAM**: Expensive for large datasets  
+ **Data Loss Risk**: If server crashes, data gone (unless configured)  
+ **Single-Threaded**: Limited CPU usage
 
 ### Real-World Use Cases:
 - **Caching**: Speed up websites (80% of use cases)
@@ -359,16 +359,16 @@ Data stored as **nodes** (things) and **relationships** (connections):
 ```
 
 ### Strengths:
-✅ **Natural Relationships**: Connections are first-class citizens  
-✅ **Fast Traversals**: Find "friend of friend" instantly  
-✅ **Flexible Schema**: Add new relationships anytime  
-✅ **Cypher Query Language**: Intuitive query syntax  
-✅ **Pattern Matching**: Find complex relationship patterns
+ **Natural Relationships**: Connections are first-class citizens  
+ **Fast Traversals**: Find "friend of friend" instantly  
+ **Flexible Schema**: Add new relationships anytime  
+ **Cypher Query Language**: Intuitive query syntax  
+ **Pattern Matching**: Find complex relationship patterns
 
 ### Weaknesses:
-❌ **Limited Scale**: Not for billions of nodes  
-❌ **Overkill for Simple Data**: Use SQL if no complex relationships  
-❌ **Sharding is Hard**: Difficult to distribute
+ **Limited Scale**: Not for billions of nodes  
+ **Overkill for Simple Data**: Use SQL if no complex relationships  
+ **Sharding is Hard**: Difficult to distribute
 
 ### Real-World Use Cases:
 - **Social Networks**: Friend recommendations, connections
@@ -431,11 +431,11 @@ Results:
 ```
 
 ### Strengths:
-✅ **Full-Text Search**: Search within documents  
-✅ **Fuzzy Matching**: Handles typos ("appel" → "apple")  
-✅ **Real-Time**: Index and search instantly  
-✅ **Analytics**: Aggregate and analyze data  
-✅ **Scalable**: Distributed architecture
+ **Full-Text Search**: Search within documents  
+ **Fuzzy Matching**: Handles typos ("appel" → "apple")  
+ **Real-Time**: Index and search instantly  
+ **Analytics**: Aggregate and analyze data  
+ **Scalable**: Distributed architecture
 
 ### Real-World Use Cases:
 - **E-commerce Search**: Product searches
@@ -550,16 +550,16 @@ Netflix uses Cassandra for viewing history (billions of writes/day) but uses oth
 **Step 2: Which SQL Database?**
 
 **Need maximum features and robustness?**  
-→ **PostgreSQL** ✅
+→ **PostgreSQL** 
 
 **Need maximum read speed and simplicity?**  
-→ **MySQL** ✅
+→ **MySQL** 
 
 **Enterprise with big budget?**  
-→ **Oracle** ✅
+→ **Oracle** 
 
 **Using Microsoft stack (.NET)?**  
-→ **SQL Server** ✅
+→ **SQL Server** 
 
 ---
 
@@ -568,25 +568,25 @@ Netflix uses Cassandra for viewing history (billions of writes/day) but uses oth
 **What's your primary need?**
 
 **Flexible schema, moderate scale, rich queries?**  
-→ **MongoDB** ✅
+→ **MongoDB** 
 
 **Massive scale, high availability, write-heavy?**  
-→ **Cassandra** ✅
+→ **Cassandra** 
 
 **Ultra-fast caching, real-time features?**  
-→ **Redis** ✅
+→ **Redis** 
 
 **Fully managed, AWS ecosystem?**  
-→ **DynamoDB** ✅
+→ **DynamoDB** 
 
 **Complex relationships and connections?**  
-→ **Neo4j (Graph)** ✅
+→ **Neo4j (Graph)** 
 
 **Time-stamped sensor/metrics data?**  
-→ **InfluxDB/TimescaleDB** ✅
+→ **InfluxDB/TimescaleDB** 
 
 **Full-text search functionality?**  
-→ **Elasticsearch** ✅
+→ **Elasticsearch** 
 
 ---
 
