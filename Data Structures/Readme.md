@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This guide explains various data structures used in real-world Spring Boot applications with simple analogies and practical examples. Beyond the common ones you mentioned (sliding window for rate limiting, LRU/LFU caches, heaps, and ConcurrentHashMap), here are other important data structures you'll encounter.
+This guide explains various data structures used in real-world Spring Boot applications with simple analogies and practical examples.
 
 ---
 
