@@ -6,11 +6,14 @@ But not all APIs are built the same. Over time, as applications evolved, so did 
 
 This guide breaks down the 6 most common API styles that power modern software.
 
+<img width="2060" height="1352" alt="62b1d686-12cb-41b3-bead-a67d3bd71c82_2060x1352" src="https://github.com/user-attachments/assets/d752348b-c80b-4a5a-ba2a-685b411f5f98" />
+
 ---
 
 ## 1. SOAP
+<img width="1504" height="1072" alt="499d14dc-13b4-4dba-ac9f-55ebd61ce450_1504x1072" src="https://github.com/user-attachments/assets/c8b4ca28-2d0c-4031-b8ff-1f4a9bdfe1a4" />
 
-![SOAP API]()
+
 
 In the beginning, there was SOAP (Simple Object Access Protocol).
 
@@ -30,7 +33,8 @@ While this was acceptable for large, internal enterprise systems, SOAP was just 
 
 ## 2. REST
 
-![REST API]()
+<img width="1430" height="766" alt="ceffcb77-5f19-4b47-91e4-34172c0c29bf_1430x766" src="https://github.com/user-attachments/assets/aa232604-3ec8-4389-b9de-7e259a0b6b5a" />
+
 
 In response to SOAP's complexity, REST (Representational State Transfer) emerged and it quickly became the standard for the modern web.
 
@@ -52,7 +56,7 @@ As frontend applications grew richer, especially with mobile and single-page app
 
 ## 3. GraphQL
 
-![GraphQL API]()
+<img width="2054" height="1134" alt="bce77367-f050-4857-86ea-6e195533566e_2054x1134" src="https://github.com/user-attachments/assets/d02d48ad-e25b-4b8b-89a3-64c255998bbe" />
 
 What if you could ask for exactly what you need, all in one trip?
 
@@ -82,7 +86,9 @@ GraphQL shares a fundamental trait with REST: it's text-based (JSON) and works o
 
 ## 4. gRPC
 
-![gRPC]()
+<img width="1344" height="768" alt="Gemini_Generated_Image_m3am5bm3am5bm3am" src="https://github.com/user-attachments/assets/cebdb1ff-a2ed-4bac-8a03-c90ec5e68645" />
+
+
 
 Developed by Google and open-sourced in 2015, gRPC is a modern Remote Procedure Call (RPC) framework designed for high-performance, language-agnostic communication between services.
 
@@ -108,7 +114,8 @@ Although highly performant, gRPC is still a request-response pattern: the client
 
 ## 5. WebSocket
 
-![WebSocket]()
+<img width="1578" height="1396" alt="16af465d-4259-464e-b02d-c9113691cce7_1578x1396" src="https://github.com/user-attachments/assets/faca8546-c5ab-4cf8-ad74-a26b184813ba" />
+
 
 Traditional HTTP, which underpins REST, GraphQL, and gRPC, is a request-response protocol. The client must always initiate the conversation.
 
@@ -134,7 +141,7 @@ For example, what if Stripe's server needs to notify your server that a payment 
 
 ## 6. Webhook
 
-![Webhook]()
+<img width="2326" height="1174" alt="086948ff-998e-4627-a821-29447ea984a1_2326x1174" src="https://github.com/user-attachments/assets/de1247c7-4b5c-42d1-a352-7eec142c49c6" />
 
 Webhooks are essentially "reverse APIs." Instead of your application polling an API endpoint for new data, the server calls your application (acting as the client) when a specific event occurs. It's a user-defined HTTP callback.
 
