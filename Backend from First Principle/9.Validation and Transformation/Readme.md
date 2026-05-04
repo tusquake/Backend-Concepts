@@ -171,7 +171,251 @@ curl -X POST https://yourapi.com/users \
 
 ---
 
-## VI. Additional Best Practices
+## VI. Validation & Transformation in Spring Boot
+
+Spring Boot provides a **first-class validation ecosystem** via the **Bean Validation API (JSR-380)** backed by **Hibernate Validator**. Validation lives in the controller layer through annotations — no manual if-checks needed.
+
+### Setup — Add the Dependency
+
+```xml
+<!-- pom.xml -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-validation</artifactId>
+</dependency>
+```
+
+---
+
+### Step 1 — Type & Syntactic Validation with Annotations
+
+Annotate your **DTO (Data Transfer Object)** fields directly. Spring validates them before your controller method even runs.
+
+```java
+import jakarta.validation.constraints.*;
+
+public class UserRequest {
+
+    @NotBlank(message = "Name must not be blank")
+    private String name;
+
+    @Email(message = "Must be a valid email address")
+    @NotNull
+    private String email;
+
+    @Min(value = 0, message = "Age must be at least 0")
+    @Max(value = 120, message = "Age must not exceed 120")
+    private int age;
+
+    @Pattern(regexp = "\\d{4}-\\d{2}-\\d{2}", message = "Date must be in YYYY-MM-DD format")
+    private String dateOfBirth;
+
+    @NotEmpty(message = "Tags must not be empty")
+    private List<@NotBlank String> tags;  // recursive — each element validated too
+}
+```
+
+| Annotation | Validation Type | What It Checks |
+|---|---|---|
+| `@NotNull` | Type | Field must not be null |
+| `@NotBlank` | Type + Syntactic | String must not be null or whitespace |
+| `@Email` | Syntactic | Valid email format |
+| `@Pattern` | Syntactic | Matches a regex |
+| `@Min` / `@Max` | Semantic | Numeric range check |
+| `@Size` | Semantic | String or collection length |
+| `@Past` / `@Future` | Semantic | Date must be in the past/future |
+
+---
+
+### Step 2 — Activate Validation in the Controller
+
+Use `@Valid` on the `@RequestBody` parameter to trigger validation:
+
+```java
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/users")
+public class UserController {
+
+    @PostMapping
+    public ResponseEntity<String> createUser(@Valid @RequestBody UserRequest request) {
+        // Reaches here only if all validations pass
+        return ResponseEntity.ok("User created");
+    }
+}
+```
+
+> If validation fails, Spring automatically throws a `MethodArgumentNotValidException` — **before** your service layer is ever called.
+
+---
+
+### Step 3 — Semantic Validation with `@Past` / `@Future`
+
+```java
+import jakarta.validation.constraints.Past;
+import java.time.LocalDate;
+
+public class UserRequest {
+
+    @Past(message = "Date of birth must be in the past")
+    private LocalDate dateOfBirth;   // 2026-01-01 → rejected ✅
+}
+```
+
+---
+
+### Step 4 — Complex (Dependent) Validation with Custom Validators
+
+For cross-field validation (e.g., `password` must match `confirmPassword`), create a **custom constraint annotation**:
+
+**1. Define the annotation:**
+
+```java
+import jakarta.validation.*;
+import java.lang.annotation.*;
+
+@Documented
+@Constraint(validatedBy = PasswordMatchValidator.class)
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface PasswordMatch {
+    String message() default "Passwords do not match";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
+}
+```
+
+**2. Implement the validator:**
+
+```java
+public class PasswordMatchValidator
+        implements ConstraintValidator<PasswordMatch, RegistrationRequest> {
+
+    @Override
+    public boolean isValid(RegistrationRequest request, ConstraintValidatorContext ctx) {
+        return request.getPassword() != null &&
+               request.getPassword().equals(request.getConfirmPassword());
+    }
+}
+```
+
+**3. Apply it to the DTO:**
+
+```java
+@PasswordMatch
+public class RegistrationRequest {
+    private String password;
+    private String confirmPassword;
+}
+```
+
+---
+
+### Step 5 — Query Parameter Validation & Transformation
+
+For `@RequestParam` and `@PathVariable`, add `@Validated` at the class level:
+
+```java
+import org.springframework.validation.annotation.Validated;
+
+@RestController
+@RequestMapping("/articles")
+@Validated  // ← enables constraint validation on method parameters
+public class ArticleController {
+
+    @GetMapping
+    public ResponseEntity<?> list(
+        @RequestParam @Min(1) int page,
+        @RequestParam @Min(1) @Max(100) int limit
+    ) {
+        // page and limit are already integers — Spring auto-casts from query string
+        return ResponseEntity.ok(...);
+    }
+}
+```
+
+> Spring Boot automatically **type-casts** query parameters (e.g., `?page=2` → `int page = 2`). You get transformation for free — no manual parsing needed.
+
+**Normalization example** — transform data in the controller before passing to the service:
+
+```java
+@PostMapping
+public ResponseEntity<?> createUser(@Valid @RequestBody UserRequest request) {
+    request.setEmail(request.getEmail().toLowerCase().trim());  // normalize
+    userService.create(request);
+    return ResponseEntity.status(201).build();
+}
+```
+
+---
+
+### Step 6 — Return Structured Validation Errors with `@ExceptionHandler`
+
+By default, Spring returns a verbose error payload. Override it with a clean, structured response using `@RestControllerAdvice`:
+
+```java
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.*;
+
+import java.util.*;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidationErrors(
+            MethodArgumentNotValidException ex) {
+
+        List<Map<String, String>> errors = ex.getBindingResult()
+            .getFieldErrors()
+            .stream()
+            .map(err -> Map.of(
+                "field", err.getField(),
+                "message", err.getDefaultMessage()
+            ))
+            .toList();
+
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(Map.of("errors", errors));
+    }
+}
+```
+
+**Response returned to the client:**
+
+```json
+{
+  "errors": [
+    { "field": "email", "message": "Must be a valid email address" },
+    { "field": "age",   "message": "Age must not exceed 120" }
+  ]
+}
+```
+
+---
+
+### Spring Boot Validation — Quick Reference Checklist
+
+| Task | How |
+|---|---|
+| Enable validation | Add `spring-boot-starter-validation` dependency |
+| Validate request body | `@Valid` on `@RequestBody` parameter |
+| Validate query params | `@Validated` on class + constraints on `@RequestParam` |
+| Type validation | `@NotNull`, `@NotBlank`, `@NotEmpty` |
+| Syntactic validation | `@Email`, `@Pattern(regexp = "...")` |
+| Semantic validation | `@Min`, `@Max`, `@Size`, `@Past`, `@Future` |
+| Cross-field validation | Custom `@Constraint` + `ConstraintValidator` |
+| Auto type-cast query params | Built-in — Spring handles `String → int/long/boolean` |
+| Normalize data | Manual transform in controller before service call |
+| Structured error response | `@RestControllerAdvice` + `@ExceptionHandler` |
+
+---
+
+## VII. Additional Best Practices
 
 ### Return Structured Validation Errors
 
